@@ -12,8 +12,8 @@ message:
 	already logged in				200 success
 	username exists					409 conflict
 	invalid password				400 bad request
-	empty name						400 bad request
+	empty name					400 bad request
 	empty username					400 bad request
 	empty password					400 bad request
-	empty email						400 bad request
+	empty email					400 bad request
 ```
