@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -30,8 +31,9 @@ func TestMain(m *testing.M) {
 }
 
 type UserTest struct {
-	user User
-	code int
+	user     User
+	code     int
+	response string
 }
 
 func TestSignUp(t *testing.T) {
@@ -44,7 +46,8 @@ func TestSignUp(t *testing.T) {
 				Email:    "a",
 				Password: "a",
 			},
-			code: 201,
+			code:     201,
+			response: `{"User":{"ID":1,"name":"a","username":"a","password":"a","email":"a"},"Message":"successfully registered"}`,
 		},
 		// same username
 		UserTest{
@@ -54,17 +57,19 @@ func TestSignUp(t *testing.T) {
 				Email:    "b",
 				Password: "b",
 			},
-			code: 400,
+			code:     400,
+			response: `{"User":null,"Message":"pq: duplicate key value violates unique constraint \"users_username_key\""}`,
 		},
 		// same email
 		UserTest{
 			user: User{
-				Name:     "a",
+				Name:     "b",
 				Username: "b",
 				Email:    "a",
 				Password: "b",
 			},
-			code: 400,
+			code:     400,
+			response: `{"User":null,"Message":"pq: duplicate key value violates unique constraint \"users_email_key\""}`,
 		},
 		// empty name
 		UserTest{
@@ -74,7 +79,8 @@ func TestSignUp(t *testing.T) {
 				Email:    "c",
 				Password: "c",
 			},
-			code: 400,
+			code:     400,
+			response: `{"User":null,"Message":"empty name"}`,
 		},
 		// empty username
 		UserTest{
@@ -84,7 +90,8 @@ func TestSignUp(t *testing.T) {
 				Email:    "d",
 				Password: "d",
 			},
-			code: 400,
+			code:     400,
+			response: `{"User":null,"Message":"empty username"}`,
 		},
 		// empty password
 		UserTest{
@@ -94,7 +101,8 @@ func TestSignUp(t *testing.T) {
 				Email:    "e",
 				Password: "",
 			},
-			code: 400,
+			code:     400,
+			response: `{"User":null,"Message":"empty password"}`,
 		},
 		// empty email
 		UserTest{
@@ -104,25 +112,22 @@ func TestSignUp(t *testing.T) {
 				Email:    "",
 				Password: "f",
 			},
-			code: 400,
+			code:     400,
+			response: `{"User":null,"Message":"empty email"}`,
 		},
 	}
 
 	for _, test := range users {
-		//log.Println("/////////start///////////")
-
 		js, err := json.Marshal(test.user)
 		if err != nil {
-			log.Println(err)
 			continue
 		}
 		payload := fmt.Sprintf(string(js[:len(js)]))
 
 		req, _ := http.NewRequest("POST", "/signup", strings.NewReader(payload))
-		//debugReq(req)
-
 		response := executeRequest(req)
-		checkResponseCode(t, test.code, response.Code, test.user)
+
+		checkResponseCode(t, test.code, response.Code, test.response, debugResp(response), test.user)
 	}
 
 }
@@ -133,9 +138,13 @@ func executeRequest(req *http.Request) *httptest.ResponseRecorder {
 	return resp
 }
 
-func checkResponseCode(t *testing.T, expected, actual int, user User) {
-	if expected != actual {
-		t.Errorf("Expected response code %d. Got %d\n", expected, actual)
+func checkResponseCode(t *testing.T, expectedCode int, actualCode int, expectedResp string, actualResp string, user User) {
+	if expectedCode != actualCode {
+		t.Errorf("Expected response code %d. Got %d\n", expectedCode, actualCode)
+		t.Errorf("%v\n", user)
+	}
+	if expectedResp != actualResp {
+		t.Errorf("\nExpected response %v\nGot response %v\n", expectedResp, actualResp)
 		t.Errorf("%v\n", user)
 	}
 }
@@ -146,5 +155,15 @@ func debugReq(req *http.Request) {
 		log.Println("error ", err)
 	} else {
 		fmt.Println(string(reqDump))
+	}
+}
+
+func debugResp(resp *httptest.ResponseRecorder) string {
+	respDump, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("error ", err)
+		return ""
+	} else {
+		return string(respDump[:len(respDump)-1])
 	}
 }
