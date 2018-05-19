@@ -8,7 +8,7 @@ user:
 	id:
 	username:
 message:
-	successfully registered			201 created
+	successfully registered				201 created
 	already logged in				200 success
 	username exists					409 conflict
 	invalid password				400 bad request
