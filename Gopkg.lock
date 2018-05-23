@@ -42,7 +42,7 @@
     "hstore",
     "oid"
   ]
-  revision = "d34b9ff171c21ad295489235aec8b6626023cd04"
+  revision = "90697d60dd844d5ef6ff15135d0203f65d2f53b8"
 
 [solve-meta]
   analyzer-name = "dep"

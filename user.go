@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -28,9 +27,12 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 	// checks if a user is already logged in or not
 	user := checkLoggedIn(w, r)
 
+	var resp map[string]interface{}
+
 	// already logged in
 	if user != nil {
-		writeSignUp(w, user, "already logged in", http.StatusOK)
+		resp = map[string]interface{}{"user": *user, "message": "already logged in"}
+		writeResp(w, http.StatusOK, resp)
 		return
 	}
 
@@ -39,69 +41,80 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 	user, err = getUserFromReq(r)
 
 	if err != nil {
-		writeSignUp(w, nil, err.Error(), http.StatusInternalServerError)
+		resp = map[string]interface{}{"user": nil, "message": err.Error()}
+		writeResp(w, http.StatusInternalServerError, resp)
 		return
 	}
 
 	if user.Username == "" {
-		writeSignUp(w, nil, "empty username", http.StatusBadRequest)
+		resp = map[string]interface{}{"user": nil, "message": "empty username"}
+		writeResp(w, http.StatusBadRequest, resp)
 		return
 	}
 	if user.Password == "" {
-		writeSignUp(w, nil, "empty password", http.StatusBadRequest)
+		resp = map[string]interface{}{"user": nil, "message": "empty password"}
+		writeResp(w, http.StatusBadRequest, resp)
 		return
 	}
 	if user.Email == "" {
-		writeSignUp(w, nil, "empty email", http.StatusBadRequest)
+		resp = map[string]interface{}{"user": nil, "message": "empty email"}
+		writeResp(w, http.StatusBadRequest, resp)
 		return
 	}
 	if user.Name == "" {
-		writeSignUp(w, nil, "empty name", http.StatusBadRequest)
+		resp = map[string]interface{}{"user": nil, "message": "empty name"}
+		writeResp(w, http.StatusBadRequest, resp)
 		return
 	}
 
 	// insert into db
 	err = app.db.Create(user).Error
 	if err != nil {
-		writeSignUp(w, nil, err.Error(), http.StatusBadRequest)
+		resp = map[string]interface{}{"user": nil, "message": err.Error()}
+		writeResp(w, http.StatusBadRequest, resp)
 		return
 	}
 
-	writeSignUp(w, user, "successfully registered", http.StatusCreated)
-
-}
-
-type signupResp struct {
-	User    *User
-	Message string
-}
-
-// write json response
-func writeSignUp(w http.ResponseWriter, currentUser *User, msg string, code int) {
-	resp := signupResp{
-		User:    currentUser,
-		Message: msg,
-	}
-
-	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(resp)
+	resp = map[string]interface{}{"user": user, "message": "successfully registered"}
+	writeResp(w, http.StatusCreated, resp)
 }
 
 // handler for api/signin
 // first checks if a user has already logged in or not
-// if logged in redirect to home
-// else check if username exits, if not then return "user not found"
+// if not check if username exits, if not then return "user not found"
 // check password, if do not match then return "invalid password"
-// else login user and redirect to home
+// else log-in user
 func Signin(w http.ResponseWriter, r *http.Request) {
-	// check if user logged in
-	// if logged in, redirect to home
-	checkLoggedIn(w, r)
+	// checks if a user is already logged in or not
+	user := checkLoggedIn(w, r)
+
+	var resp map[string]interface{}
+
+	// already logged in
+	if user != nil {
+		resp = map[string]interface{}{"user": *user, "message": "already logged in"}
+		writeResp(w, http.StatusOK, resp)
+		return
+	}
 
 	// get user from request body
-	user, err := getUserFromReq(r)
+	var err error
+	user, err = getUserFromReq(r)
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		resp = map[string]interface{}{"user": nil, "message": err.Error()}
+		writeResp(w, http.StatusInternalServerError, resp)
+		return
+	}
+
+	if user.Username == "" {
+		resp = map[string]interface{}{"user": nil, "message": "empty username"}
+		writeResp(w, http.StatusBadRequest, resp)
+		return
+	}
+	if user.Password == "" {
+		resp = map[string]interface{}{"user": nil, "message": "empty password"}
+		writeResp(w, http.StatusBadRequest, resp)
 		return
 	}
 
@@ -110,27 +123,34 @@ func Signin(w http.ResponseWriter, r *http.Request) {
 	app.db.Where("username = ?", user.Username).First(&userInDB)
 
 	if userInDB.Username == "" {
-		http.Error(w, "username not found", http.StatusBadRequest)
+		resp = map[string]interface{}{"user": nil, "message": "username not found"}
+		writeResp(w, http.StatusBadRequest, resp)
 		return
 	}
 
 	// check if password matches
 	if userInDB.Password != user.Password {
-		http.Error(w, "invalid password", http.StatusBadRequest)
+		resp = map[string]interface{}{"user": nil, "message": "invalid password"}
+		writeResp(w, http.StatusBadRequest, resp)
 		return
 	}
-
-	fmt.Println(userInDB)
 
 	// everything is ok, now generate a new token
 	token, err := generateToken(r, user.Username)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		resp = map[string]interface{}{"user": nil, "message": "error generating token" + err.Error()}
+		writeResp(w, http.StatusBadRequest, resp)
 		return
 	}
 
 	// return token
-	fmt.Println(*token)
+	resp = map[string]interface{}{"user": userInDB, "token": *token, "message": "successfully logged in"}
+	writeResp(w, http.StatusOK, resp)
+}
+
+func writeResp(w http.ResponseWriter, code int, resp map[string]interface{}) {
+	w.WriteHeader(code)
+	json.NewEncoder(w).Encode(resp)
 }
 
 // check if user logged in
@@ -145,6 +165,7 @@ func checkLoggedIn(w http.ResponseWriter, r *http.Request) *User {
 	return user
 }
 
+// generate jwt token
 func generateToken(r *http.Request, username string) (*string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
