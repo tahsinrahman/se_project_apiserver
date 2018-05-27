@@ -36,6 +36,8 @@ func (a *App) Initialize(host, port, dbname, username, password string) {
 	a.Router.HandleFunc("/", Home).Methods("GET")
 	a.Router.HandleFunc("/signin", Signin).Methods("POST")
 	a.Router.HandleFunc("/signup", Signup).Methods("POST")
+	a.Router.HandleFunc("/create-company", CreateCompany).Methods("POST")
+	a.Router.HandleFunc("/{id}/update-company", UpdateCompany).Methods("POST")
 }
 
 // it listens on the given address
@@ -46,6 +48,7 @@ func (a *App) Run(addr string) {
 // create all necessary tables
 func (a *App) createTables() {
 	a.db.AutoMigrate(&User{})
+	a.db.AutoMigrate(&Company{})
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {

@@ -1,36 +1,108 @@
 ## API Documentation
 
 **api/signup**
+
+Request
 ```
-user:
-	name:
-	email:
-	id:
-	username:
-message:
-	successfully registered				201 created
-	already logged in				200 success
-	username exists					409 conflict
-	invalid password				400 bad request
-	empty name					400 bad request
-	empty username					400 bad request
-	empty password					400 bad request
-	empty email					400 bad request
+{
+    "name" : "__",
+    "username" : "__",
+    "email" : "__",
+    "password" : "__"
+}
+```
+
+Response
+```
+{
+    "user" {
+        "id" : "__",
+        "name" : "__",
+        "username" : "__",
+        "email" : "__"
+    },
+    "message" : "__"
+}
 ```
 
 **api/signin**
+
+Request
 ```
-user:
-	name:
-	email:
-	id:
-	username:
-token:
-message:
-	successfully logged in			200 success
-	already logged in			200 success
-	username doesn't exist			404 not found
-	invalid password			400 bad request
-	empty username                         	400 bad request
-        empty password                          400 bad request
+{
+    "username" : "__",
+    "password" : "__"
+}
+```
+
+Response
+```
+{
+    "user" {
+        "id" : "__",
+        "name" : "__",
+        "username" : "__",
+        "email" : "__",
+    },
+    "token" : "__",
+    "message" : "__"
+}
+```
+
+**api/create-company**
+
+Request
+```
+{
+    "name" : "__",
+    "description": "__"
+}
+```
+
+Response
+```
+{
+    "user" {
+        "id" : "__",
+        "name" : "__",
+        "username" : "__",
+        "email" : "__",
+    },
+    "company" {
+        "id"
+        "name"
+        "description"
+    },
+    "message" : "__"
+}
+```
+
+**api/id/update-company**
+
+request
+```
+{
+    "name" :
+    "description" :
+    "admins":
+    "hrs":
+}
+```
+
+response
+```
+{
+    "user" {
+        "id" : "__",
+        "name" : "__",
+        "username" : "__",
+        "email" : "__",
+    },
+    "company" {
+        "id"
+        "name"
+        "description"
+    },
+    "message" : "__"
+}
 ```
