@@ -10,6 +10,21 @@ import (
 	"testing"
 )
 
+type UserTest struct {
+	Req   string
+	Resp  string
+	Code  int
+	Token string
+}
+
+type CompanyTest struct {
+	Req   string
+	Resp  string
+	Code  int
+	Token string
+	ID    string
+}
+
 func runTest(req *http.Request, test UserTest, t *testing.T) {
 	response := executeRequest(req)
 
@@ -19,10 +34,10 @@ func runTest(req *http.Request, test UserTest, t *testing.T) {
 		return
 	}
 
-	log.Println("request => ", test.req)
+	log.Println("request => ", test.Req)
 	log.Println("response => ", string(resp))
 
-	checkResponseCode(t, test.code, response.Code, test.resp, string(resp[:len(resp)-1]))
+	checkResponseCode(t, test.Code, response.Code, test.Resp, string(resp[:len(resp)-1]))
 }
 
 func executeRequest(req *http.Request) *httptest.ResponseRecorder {
@@ -36,7 +51,7 @@ func checkResponseCode(t *testing.T, expectedCode int, actualCode int, expectedR
 		t.Errorf("Expected response code %d. Got %d\n", expectedCode, actualCode)
 	}
 	if expectedResp != actualResp {
-		t.Errorf("\nExpected response %v\nGot response %v\n", expectedResp, actualResp)
+		t.Errorf("\nExp response %v\nGot response %v\n", expectedResp, actualResp)
 	}
 }
 
@@ -52,6 +67,9 @@ func debugReq(req *http.Request) {
 func droptable() {
 	app.db.DropTable(User{})
 	app.db.DropTable(Company{})
-	app.db.AutoMigrate(User{})
-	app.db.AutoMigrate(Company{})
+
+	app.db.Exec("DROP TABLE company_admin;")
+	app.db.Exec("DROP TABLE company_hr;")
+
+	app.CreateTables()
 }

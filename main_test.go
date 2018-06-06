@@ -17,7 +17,7 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 
-	app.db.DropTable(User{})
+	droptable()
 
 	os.Exit(code)
 }

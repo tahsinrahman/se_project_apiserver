@@ -11,11 +11,9 @@ import (
 )
 
 // handler for api/signup
-// first checks if a user is already logged in or not
-// then check if username/email exits, if yes then return "username/email exists"
-// register user and update db
 func Signup(w http.ResponseWriter, r *http.Request) {
 	// checks if a user is already logged in or not
+	// collect and varify token form request header
 	user := checkLoggedIn(w, r)
 
 	var resp map[string]interface{}
@@ -66,7 +64,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp = map[string]interface{}{"user": user, "message": "successfully registered"}
+	resp = map[string]interface{}{"user": user.Response(), "message": "successfully registered"}
 	writeResp(w, http.StatusCreated, resp)
 }
 
@@ -135,7 +133,7 @@ func Signin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// return token
-	resp = map[string]interface{}{"user": userInDB, "token": *token, "message": "successfully logged in"}
+	resp = map[string]interface{}{"user": userInDB.Response(), "token": *token, "message": "successfully logged in"}
 	writeResp(w, http.StatusOK, resp)
 }
 

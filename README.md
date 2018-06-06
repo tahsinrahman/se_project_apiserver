@@ -72,6 +72,40 @@ Response
         "id"
         "name"
         "description"
+        "admin" : [
+            {
+                "ID":
+                "name":
+                "username":
+                "email":
+            }
+            {
+                "ID":
+                "name":
+                "username":
+                "email":
+            }
+            .
+            .
+            .
+        ]
+        "HR" : [
+            {
+                "ID":
+                "name":
+                "username":
+                "email":
+            }
+            {
+                "ID":
+                "name":
+                "username":
+                "email":
+            }
+            .
+            .
+            .
+        ]
     },
     "message" : "__"
 }
@@ -84,8 +118,40 @@ request
 {
     "name" :
     "description" :
-    "admins":
-    "hrs":
+    "admin" : [
+        {
+            "ID":
+            "name":
+            "username":
+            "email":
+        }
+        {
+            "ID":
+            "name":
+            "username":
+            "email":
+        }
+        .
+        .
+        .
+    ]
+    "HR" : [
+        {
+            "ID":
+            "name":
+            "username":
+            "email":
+        }
+        {
+            "ID":
+            "name":
+            "username":
+            "email":
+        }
+        .
+        .
+        .
+    ]
 }
 ```
 

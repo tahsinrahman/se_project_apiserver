@@ -25,7 +25,7 @@ func (a *App) Initialize(host, port, dbname, username, password string) {
 	var err error
 	a.db, err = gorm.Open("postgres", conn)
 
-	a.createTables()
+	a.CreateTables()
 
 	if err != nil {
 		log.Fatal(err)
@@ -36,8 +36,9 @@ func (a *App) Initialize(host, port, dbname, username, password string) {
 	a.Router.HandleFunc("/", Home).Methods("GET")
 	a.Router.HandleFunc("/signin", Signin).Methods("POST")
 	a.Router.HandleFunc("/signup", Signup).Methods("POST")
-	a.Router.HandleFunc("/create-company", CreateCompany).Methods("POST")
-	a.Router.HandleFunc("/{id}/update-company", UpdateCompany).Methods("POST")
+	a.Router.HandleFunc("/company", CreateCompany).Methods("POST")
+	a.Router.HandleFunc("/{id}/company", UpdateCompany).Methods("PUT")
+	//a.Router.HandleFunc("/{id}/company", ShowCompany).Methods("GET")
 }
 
 // it listens on the given address
@@ -46,7 +47,7 @@ func (a *App) Run(addr string) {
 }
 
 // create all necessary tables
-func (a *App) createTables() {
+func (a *App) CreateTables() {
 	a.db.AutoMigrate(&User{})
 	a.db.AutoMigrate(&Company{})
 }

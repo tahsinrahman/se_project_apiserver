@@ -14,7 +14,7 @@ func CreateCompany(w http.ResponseWriter, r *http.Request) {
 
 	// checks if a user is already logged in or not
 	user := checkLoggedIn(w, r)
-	resp["user"] = user
+	resp["user"] = user.Response()
 	resp["company"] = nil
 
 	// not logged in
@@ -55,22 +55,19 @@ func CreateCompany(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp["company"] = company
+	resp["company"] = company.Response()
 	resp["message"] = "successfully registered company"
 
 	writeResp(w, http.StatusCreated, resp)
 }
 
 // handler for api/update-company
-// first check if user is logged in
-// if yes then check check if user is admin, only admin can update company infos
-// if yes then check if the requested infos' are valid
 func UpdateCompany(w http.ResponseWriter, r *http.Request) {
 	resp := make(map[string]interface{})
 
 	// checks if a user is already logged in or not
 	user := checkLoggedIn(w, r)
-	resp["user"] = user
+	resp["user"] = user.Response()
 	resp["company"] = nil
 
 	// not logged in
@@ -87,7 +84,7 @@ func UpdateCompany(w http.ResponseWriter, r *http.Request) {
 	err := app.db.Where("id = ?", vars["id"]).First(&tmpCompany).Error
 	if err != nil {
 		resp["message"] = err.Error()
-		writeResp(w, http.StatusInternalServerError, resp)
+		writeResp(w, http.StatusBadRequest, resp)
 		return
 	}
 
@@ -119,7 +116,6 @@ func UpdateCompany(w http.ResponseWriter, r *http.Request) {
 		writeResp(w, http.StatusInternalServerError, resp)
 		return
 	}
-	company.ID = tmpCompany.ID
 
 	// check for empty fields
 	if company.Name == "" {
@@ -132,11 +128,12 @@ func UpdateCompany(w http.ResponseWriter, r *http.Request) {
 		writeResp(w, http.StatusBadRequest, resp)
 		return
 	}
+	company.ID = tmpCompany.ID
 
 	// check for invalid entry
 	emptyAdmin := true
-	for index, _ := range company.Admin {
-		err = app.db.First(&company.Admin[index]).Error
+	for index, admin := range company.Admin {
+		err = app.db.Where(admin).First(&company.Admin[index]).Error
 		if err != nil {
 			resp["message"] = "admin not found => " + err.Error()
 			writeResp(w, http.StatusBadRequest, resp)
@@ -152,8 +149,8 @@ func UpdateCompany(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check for invalid intry
-	for index, _ := range company.HR {
-		err = app.db.First(&company.HR[index]).Error
+	for index, HR := range company.HR {
+		err = app.db.Where(HR).First(&company.HR[index]).Error
 		if err != nil {
 			resp["message"] = "hr account not found => " + err.Error()
 			writeResp(w, http.StatusBadRequest, resp)
@@ -177,7 +174,7 @@ func UpdateCompany(w http.ResponseWriter, r *http.Request) {
 	existsHR := make(map[uint]bool)
 
 	for _, hr := range company.HR {
-		if !existsHR[hr.ID] {
+		if !existsHR[hr.ID] && !existsAdmin[hr.ID] {
 			existsHR[hr.ID] = true
 			hrs = append(hrs, hr)
 		}
@@ -185,14 +182,23 @@ func UpdateCompany(w http.ResponseWriter, r *http.Request) {
 	company.HR = hrs
 
 	err = app.db.Save(company).Error
-
 	if err != nil {
 		resp["message"] = err.Error()
 		writeResp(w, http.StatusInternalServerError, resp)
 		return
 	}
+	if err = app.db.Model(company).Association("admin").Replace(company.Admin).Error; err != nil {
+		resp["message"] = err.Error()
+		writeResp(w, http.StatusInternalServerError, resp)
+		return
+	}
+	if err = app.db.Model(company).Association("HR").Replace(company.HR).Error; err != nil {
+		resp["message"] = err.Error()
+		writeResp(w, http.StatusInternalServerError, resp)
+		return
+	}
 
-	resp["company"] = company
+	resp["company"] = company.Response()
 	resp["message"] = "successfully updated"
 	writeResp(w, http.StatusOK, resp)
 }
