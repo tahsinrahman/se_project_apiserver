@@ -1,0 +1,13 @@
+{
+    "token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOiIxNTMwNzk4MTg2IiwidXNlcm5hbWUiOiJjIn0.AX-WNxm9Qnbf2tq9Vsn2490pPreig54AZJfsXcuyqME",
+    "job" : {
+        "title" : "software engineer",
+        "description" : "your responsibility is to build quality software",
+        "salary" : "",
+        "type" : "full-time",
+        "field" : "cs, software-engineering",
+        "requirement" : "bsc in cse, expert in c, c++",
+        "experience" : "2 years of experience in software development",
+        "location" : "dhaka"
+    }
+}

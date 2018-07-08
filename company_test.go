@@ -1,14 +1,7 @@
 package main
 
-import (
-	"io/ioutil"
-	"log"
-	"net/http"
-	"strings"
-	"testing"
-)
-
 // test creating a new company
+/*
 func TestCreateCompany(t *testing.T) {
 	droptable()
 	app.db.Create(&User{Name: "a", Username: "a", Password: "a", Email: "a"})
@@ -219,3 +212,4 @@ func TestUpdateCompany(t *testing.T) {
 		checkResponseCode(t, test.Code, response.Code, test.Resp, string(resp[:len(resp)-1]))
 	}
 }
+*/

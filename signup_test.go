@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -15,43 +16,43 @@ func TestSignUp(t *testing.T) {
 	var users = []UserTest{
 		// ok
 		UserTest{
-			Req:  `{"name":"a", "username": "a", "email": "a", "password": "a"}`,
-			Resp: `{"message":"successfully registered","user":{"ID":1,"email":"a","name":"a","username":"a"}}`,
+			Req:  `{"firstname":"a", "lastname": "b", "username": "a", "email": "a", "password": "a"}`,
+			Resp: `{"message":"successfully registered","user":{"DateOfBirth":null,"HR":null,"ID":1,"admin":null,"currentJob":null,"designation":null,"email":"a","firstname":"a","lastname":"b","location":null,"name":"a b","username":"a"}}`,
 			Code: 201,
 		},
 		// same username
 		UserTest{
-			Req:  `{"name":"a", "username": "a", "email": "b", "password": "b"}`,
+			Req:  `{"firstname":"a", "username": "a", "email": "b", "password": "b"}`,
 			Resp: `{"message":"pq: duplicate key value violates unique constraint \"users_username_key\"","user":null}`,
 			Code: 400,
 		},
 		// same email
 		UserTest{
-			Req:  `{"name":"b", "username": "b", "email": "a", "password": "b"}`,
+			Req:  `{"firstname":"b", "username": "b", "email": "a", "password": "b"}`,
 			Resp: `{"message":"pq: duplicate key value violates unique constraint \"users_email_key\"","user":null}`,
 			Code: 400,
 		},
 		// empty name
 		UserTest{
-			Req:  `{"name":"", "username": "c", "email": "c", "password": "c"}`,
+			Req:  `{"firstname":"", "username": "c", "email": "c", "password": "c"}`,
 			Resp: `{"message":"empty name","user":null}`,
 			Code: 400,
 		},
 		// empty username
 		UserTest{
-			Req:  `{"name":"c", "username": "", "email": "c", "password": "c"}`,
+			Req:  `{"firstname":"c", "username": "", "email": "c", "password": "c"}`,
 			Resp: `{"message":"empty username","user":null}`,
 			Code: 400,
 		},
 		// empty email
 		UserTest{
-			Req:  `{"name":"c", "username": "c", "email": "", "password": "c"}`,
+			Req:  `{"firstname":"c", "username": "c", "email": "", "password": "c"}`,
 			Resp: `{"message":"empty email","user":null}`,
 			Code: 400,
 		},
 		// empty password
 		UserTest{
-			Req:  `{"name":"c", "username": "c", "email": "c", "password": ""}`,
+			Req:  `{"firstname":"c", "username": "c", "email": "c", "password": ""}`,
 			Resp: `{"message":"empty password","user":null}`,
 			Code: 400,
 		},
@@ -74,7 +75,7 @@ func TestSignIn(t *testing.T) {
 		// ok
 		UserTest{
 			Req:  `{"username": "a", "password": "a"}`,
-			Resp: `{"message":"successfully logged in", "user":{"ID":1,"name":"a","username":"a","email":"a"}}`,
+			Resp: `{"message":"successfully logged in", "user":{"DateOfBirth":null,"HR":null,"ID":1,"admin":null,"currentJob":null,"designation":null,"email":"a","firstname":"a","lastname":"b","location":null,"name":"a b","username":"a"}`,
 			Code: 200,
 		},
 		// empty username
@@ -149,7 +150,9 @@ func checkSignIn(t *testing.T, expectedCode int, actualCode int, expectedResp st
 		return
 	}
 
-	if expected != actual {
-		t.Errorf("Expected Response %v. Got Response %v\n", expected, actual)
+	if reflect.DeepEqual(expected, actual) == false {
+		t.Errorf("Expected Response %v\nGot Response %v\n", expected, actual)
+		log.Println("1111111111")
+		log.Println(reflect.ValueOf(expected))
 	}
 }

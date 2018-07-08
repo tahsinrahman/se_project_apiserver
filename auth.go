@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -10,131 +11,14 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-// handler for api/signup
-func Signup(w http.ResponseWriter, r *http.Request) {
-	// checks if a user is already logged in or not
-	// collect and varify token form request header
-	user := checkLoggedIn(w, r)
-
-	var resp map[string]interface{}
-
-	// already logged in
-	if user != nil {
-		resp = map[string]interface{}{"user": *user, "message": "already logged in"}
-		writeResp(w, http.StatusOK, resp)
-		return
-	}
-
-	// get user from request body
-	var err error
-	user, err = getUserFromReq(r)
-
-	if err != nil {
-		resp = map[string]interface{}{"user": nil, "message": err.Error()}
-		writeResp(w, http.StatusInternalServerError, resp)
-		return
-	}
-
-	if user.Username == "" {
-		resp = map[string]interface{}{"user": nil, "message": "empty username"}
-		writeResp(w, http.StatusBadRequest, resp)
-		return
-	}
-	if user.Password == "" {
-		resp = map[string]interface{}{"user": nil, "message": "empty password"}
-		writeResp(w, http.StatusBadRequest, resp)
-		return
-	}
-	if user.Email == "" {
-		resp = map[string]interface{}{"user": nil, "message": "empty email"}
-		writeResp(w, http.StatusBadRequest, resp)
-		return
-	}
-	if user.Name == "" {
-		resp = map[string]interface{}{"user": nil, "message": "empty name"}
-		writeResp(w, http.StatusBadRequest, resp)
-		return
-	}
-
-	// insert into db
-	err = app.db.Create(user).Error
-	if err != nil {
-		resp = map[string]interface{}{"user": nil, "message": err.Error()}
-		writeResp(w, http.StatusBadRequest, resp)
-		return
-	}
-
-	resp = map[string]interface{}{"user": user.Response(), "message": "successfully registered"}
-	writeResp(w, http.StatusCreated, resp)
-}
-
-// handler for api/signin
-// first checks if a user has already logged in or not
-// if not check if username exits, if not then return "user not found"
-// check password, if do not match then return "invalid password"
-// else log-in user
-func Signin(w http.ResponseWriter, r *http.Request) {
-	// checks if a user is already logged in or not
-	user := checkLoggedIn(w, r)
-
-	var resp map[string]interface{}
-
-	// already logged in
-	if user != nil {
-		resp = map[string]interface{}{"user": *user, "message": "already logged in"}
-		writeResp(w, http.StatusOK, resp)
-		return
-	}
-
-	// get user from request body
-	var err error
-	user, err = getUserFromReq(r)
-
-	if err != nil {
-		resp = map[string]interface{}{"user": nil, "message": err.Error()}
-		writeResp(w, http.StatusInternalServerError, resp)
-		return
-	}
-
-	if user.Username == "" {
-		resp = map[string]interface{}{"user": nil, "message": "empty username"}
-		writeResp(w, http.StatusBadRequest, resp)
-		return
-	}
-	if user.Password == "" {
-		resp = map[string]interface{}{"user": nil, "message": "empty password"}
-		writeResp(w, http.StatusBadRequest, resp)
-		return
-	}
-
-	// check if username exists
-	var userInDB User
-	app.db.Where("username = ?", user.Username).First(&userInDB)
-
-	if userInDB.Username == "" {
-		resp = map[string]interface{}{"user": nil, "message": "username not found"}
-		writeResp(w, http.StatusBadRequest, resp)
-		return
-	}
-
-	// check if password matches
-	if userInDB.Password != user.Password {
-		resp = map[string]interface{}{"user": nil, "message": "invalid password"}
-		writeResp(w, http.StatusBadRequest, resp)
-		return
-	}
-
-	// everything is ok, now generate a new token
-	token, err := GenerateToken(user.Username)
-	if err != nil {
-		resp = map[string]interface{}{"user": nil, "message": "error generating token" + err.Error()}
-		writeResp(w, http.StatusBadRequest, resp)
-		return
-	}
-
-	// return token
-	resp = map[string]interface{}{"user": userInDB.Response(), "token": *token, "message": "successfully logged in"}
-	writeResp(w, http.StatusOK, resp)
+type ReqBody struct {
+	Token     string   `json:"token"`
+	User      *User    `json:"user"`
+	Company   *Company `json:"company"`
+	Job       *Job     `json:"job"`
+	UserDB    *User
+	CompanyDB *Company
+	JobDB     *Company
 }
 
 func writeResp(w http.ResponseWriter, code int, resp map[string]interface{}) {
@@ -144,14 +28,38 @@ func writeResp(w http.ResponseWriter, code int, resp map[string]interface{}) {
 
 // check if user logged in
 // if logged in, return the user who's logged in
-func checkLoggedIn(w http.ResponseWriter, r *http.Request) *User {
+func checkLoggedIn(w http.ResponseWriter, r *http.Request) (*ReqBody, error) {
 	// get token from request header
-	token := getTokenFromReq(r)
+	ReqBody, err := getTknFromReq(r)
+	if err != nil {
+		return nil, err
+	}
 
 	// check if the token is valid or not
 	// if valid return the user currently logged in
-	user := verifyToken(token)
-	return user
+	user := verifyToken(ReqBody.Token)
+	ReqBody.UserDB = user
+	log.Println("checklogged in", ReqBody)
+	return ReqBody, nil
+}
+
+// get user from request
+func getTknFromReq(r *http.Request) (*ReqBody, error) {
+	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
+
+	var token ReqBody
+	err := decoder.Decode(&token)
+
+	log.Println("get token from req", token, err)
+	if err != nil {
+		return nil, err
+	}
+	log.Println("bal", token.Token)
+	log.Println("bal", token.User)
+	log.Println("bal-job", token.Job)
+
+	return &token, nil
 }
 
 // generate jwt token
@@ -161,6 +69,7 @@ func GenerateToken(username string) (*string, error) {
 
 	// set token claims
 	claims["username"] = username
+	//claims["exp"] = strconv.FormatInt(time.Now().Add(time.Hour*24).Unix(), 10)
 	claims["exp"] = strconv.FormatInt(time.Now().Add(time.Hour*24).Unix(), 10)
 
 	// sign token with secret
@@ -174,7 +83,7 @@ func GenerateToken(username string) (*string, error) {
 }
 
 // get jwt token from request header
-// heder is like this "Authorization: Bearer TOKEN"
+// heder is like this "Authorization: Bearer <TOKEN>"
 // so we need to split the authorization header to get the token
 func getTokenFromReq(r *http.Request) string {
 	header := r.Header.Get("Authorization")
@@ -187,6 +96,12 @@ func getTokenFromReq(r *http.Request) string {
 
 // varifies a jwt token
 func verifyToken(reqToken string) *User {
+	log.Println("verify ", reqToken)
+	log.Println(reqToken)
+	if reqToken == "" {
+		log.Println("here")
+		return nil
+	}
 	token, err := jwt.Parse(reqToken, func(t *jwt.Token) (interface{}, error) {
 		return []byte(SecretKey), nil
 	})
@@ -200,24 +115,32 @@ func verifyToken(reqToken string) *User {
 
 		// check if username exists
 		var userInDB User
+		log.Println("verify username", username)
 		app.db.Where("username = ?", username).First(&userInDB)
 
+		log.Println(*userInDB.Username)
+		log.Println(*userInDB.Password)
+
 		// username not found
-		if userInDB.Username == "" {
+		if userInDB.Username == nil {
+			log.Println("1 returning")
 			return nil
 		}
 
 		// now check if current time is less than expiratin time
 		unixTime, err := strconv.ParseInt(claims["exp"].(string), 10, 64)
 		if err != nil {
+			log.Println("2 returning")
 			return nil
 		}
 
 		expirationTime := time.Unix(unixTime, 0)
+		log.Println(expirationTime)
 		if expirationTime.After(time.Now()) {
 			return &userInDB
 		}
 
+		log.Println("3 returning")
 		return nil
 	}
 

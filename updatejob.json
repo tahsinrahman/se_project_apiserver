@@ -1,0 +1,21 @@
+{
+    "token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOiIxNTMxMTQ4NDAzIiwidXNlcm5hbWUiOiJjIn0.YXQsz2_Gtdy04497cRtpf14T2wD5a1Yx-AY_VVmUiU0",
+  "job": {
+    "ID": 1,
+    "companyID": 1,
+    "companyName": null,
+    "title": "software engineer maga",
+    "description": "your responsibility is to build quality software",
+    "field": "cs, software-engineering",
+    "location": "dhaka",
+    "salary": "",
+    "experience": "2 years of experience in software development",
+    "type": "full-time",
+    "requirement": "bsc in cse, expert in c, c++",
+    "deadline": null,
+    "vacancy": null,
+    "tags": null,
+    "postedAt": null,
+    "applicants": null
+  }
+}

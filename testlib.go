@@ -37,7 +37,7 @@ func runTest(req *http.Request, test UserTest, t *testing.T) {
 	log.Println("request => ", test.Req)
 	log.Println("response => ", string(resp))
 
-	checkResponseCode(t, test.Code, response.Code, test.Resp, string(resp[:len(resp)-1]))
+	checkResponseCode(t, test.Code, response.Code, test.Req, test.Resp, string(resp[:len(resp)-1]))
 }
 
 func executeRequest(req *http.Request) *httptest.ResponseRecorder {
@@ -46,12 +46,14 @@ func executeRequest(req *http.Request) *httptest.ResponseRecorder {
 	return resp
 }
 
-func checkResponseCode(t *testing.T, expectedCode int, actualCode int, expectedResp string, actualResp string) {
+func checkResponseCode(t *testing.T, expectedCode int, actualCode int, req string, expectedResp string, actualResp string) {
 	if expectedCode != actualCode {
 		t.Errorf("Expected response code %d. Got %d\n", expectedCode, actualCode)
+		t.Errorf("%s\n", req)
 	}
 	if expectedResp != actualResp {
 		t.Errorf("\nExp response %v\nGot response %v\n", expectedResp, actualResp)
+		t.Errorf("%s\n", req)
 	}
 }
 
