@@ -1,3 +1,8 @@
 {
-    "token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOiIxNTMxMDQ0NDY1IiwidXNlcm5hbWUiOiJjIn0.vfU9IT_AbwzlV5RgCiUyFm6ku6cuISlTJw3Tcoez7p0"
+    "token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOiIxNTMxMTU4MTM1IiwidXNlcm5hbWUiOiJjIn0.g6t10fXihCpjbzEy_8AoaR4cNQHaL2rvm6V5CG4QL7w",
+    "job" : {
+        "title" : "tag-test",
+        "description" : "test",
+        "tags" : "c, c++, java, go, php, mysql"
+    }
 }

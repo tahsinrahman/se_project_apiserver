@@ -2,37 +2,39 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
-	"time"
+	"os/exec"
+	"strconv"
 )
 
 // user table
 type User struct {
-	ID          uint       `gorm:"primary_key"`
-	FirstName   *string    `json:"firstname" gorm:"not null"`
-	LastName    *string    `json:"lastname"`
-	Username    *string    `json:"username" gorm:"not null;unique"`
-	Name        *string    `json:"name"`
-	Password    *string    `json:"password" gorm:"not null"`
-	Email       *string    `json:"email" gorm:"not null;unique"`
-	CompanyID   uint       `json:"adminCompanyID"`
-	Admin       *string    `json:"admin"`
-	Role        *string    `json:"role"`
-	DateOfBirth *time.Time `json:dataOfBirth`
-	Location    *string    `json:"location"`
-	CurrentJob  *string    `json:"currentJob"`
-	Designation *string    `json:"designation"`
-	Street      *string    `json:"street"`
-	State       *string    `json:"state"`
-	Zip         *string    `json:"zip"`
-	Country     *string    `json:"country"`
-	Experience  *string    `json:"experience"`
-	Description *string    `json:"description"`
-	AppliedAt   []Job      `json:"appliedAt" gorm:"many2many:user_jobs;"`
+	ID          uint             `gorm:"primary_key"`
+	FirstName   *string          `json:"firstname" gorm:"not null"`
+	LastName    *string          `json:"lastname"`
+	Username    *string          `json:"username" gorm:"not null;unique"`
+	Name        *string          `json:"name"`
+	Password    *string          `json:"password" gorm:"not null"`
+	Email       *string          `json:"email" gorm:"not null;unique"`
+	CompanyID   uint             `json:"adminCompanyID"`
+	Admin       *string          `json:"admin"`
+	DateOfBirth *string          `json:dataOfBirth`
+	Location    *string          `json:"location"`
+	CurrentJob  *string          `json:"currentJob"`
+	Designation *string          `json:"designation"`
+	Street      *string          `json:"street"`
+	State       *string          `json:"state"`
+	Zip         *string          `json:"zip"`
+	Country     *string          `json:"country"`
+	Experience  *string          `json:"experience"`
+	Description *string          `json:"description"`
+	AppliedAt   []*UserJobStatus `json:"appliedAt"`
+	CG          string           `json:"cgpa"`
 	//Education   string    `json:education`
 	//about-yourself
 	// cv-pdf
@@ -71,6 +73,7 @@ func GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func createFile(path string, file *multipart.FileHeader) error {
+	log.Println("filepath =========== ", path)
 	newInputFile, err := os.Create(path)
 
 	if err != nil {
@@ -96,13 +99,86 @@ func createFile(path string, file *multipart.FileHeader) error {
 }
 
 func TestFileUpload(w http.ResponseWriter, r *http.Request) {
+	log.Println("uploading")
 	_, handler, err := r.FormFile("file")
 	if err != nil {
 		log.Println("error uploading file", err.Error())
 		return
 	}
-	if err = createFile("myfile", handler); err != nil {
+	if err = createFile("files/myfile", handler); err != nil {
 		log.Println("error 2 uploading file", err.Error())
+		return
+	}
+}
+
+func UploadCV(w http.ResponseWriter, r *http.Request) {
+	log.Println("uploading cv")
+	resp := make(map[string]interface{})
+
+	_, handler, err := r.FormFile("file")
+	if err != nil {
+		resp["message"] = err.Error()
+		writeResp(w, http.StatusInternalServerError, resp)
+		return
+	}
+
+	token := r.FormValue("token")
+	log.Println("111111111122222222222", r.FormValue("token"))
+
+	user := verifyToken(token)
+
+	if user == nil {
+		resp["message"] = "not logged in"
+		writeResp(w, http.StatusInternalServerError, resp)
+		return
+	}
+
+	// not logged in
+	if user == nil {
+		resp["message"] = "not logged in"
+		writeResp(w, http.StatusUnauthorized, resp)
+		return
+	}
+
+	if err := createFile("files/cv_"+strconv.Itoa(int(user.ID)), handler); err != nil {
+		resp["message"] = err.Error()
+		writeResp(w, http.StatusInternalServerError, resp)
+		return
+	}
+}
+
+func UploadPP(w http.ResponseWriter, r *http.Request) {
+	log.Println("uploading cv")
+	resp := make(map[string]interface{})
+
+	_, handler, err := r.FormFile("file")
+	if err != nil {
+		resp["message"] = err.Error()
+		writeResp(w, http.StatusInternalServerError, resp)
+		return
+	}
+
+	token := r.FormValue("token")
+	log.Println("111111111122222222222", r.FormValue("token"))
+
+	user := verifyToken(token)
+
+	if user == nil {
+		resp["message"] = "not logged in"
+		writeResp(w, http.StatusInternalServerError, resp)
+		return
+	}
+
+	// not logged in
+	if user == nil {
+		resp["message"] = "not logged in"
+		writeResp(w, http.StatusUnauthorized, resp)
+		return
+	}
+
+	if err := createFile("files/pp_"+strconv.Itoa(int(user.ID)), handler); err != nil {
+		resp["message"] = err.Error()
+		writeResp(w, http.StatusInternalServerError, resp)
 		return
 	}
 }
@@ -236,8 +312,24 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cmd := exec.Command("cp", "files/default", fmt.Sprintf("files/pp_"+strconv.Itoa(int(user.ID))))
+	cmd.Run()
+
 	resp = map[string]interface{}{"user": user.Response(), "message": "successfully registered"}
 	writeResp(w, http.StatusCreated, resp)
+}
+
+func CheckShell() {
+	cmd := exec.Command("cp", "files/default", "files/tmp_pp")
+	err := cmd.Run()
+	//stdout, err := cmd.Output()
+
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+
+	//	log.Println(string(stdout))
 }
 
 // handler for api/signin
@@ -368,5 +460,26 @@ func (user *User) Response() (resp map[string]interface{}) {
 	js, _ := json.Marshal(user)
 	json.Unmarshal(js, &resp)
 	delete(resp, "password")
+	tmp := resp["appliedAt"]
+	delete(resp, "appliedAt")
+
+	switch t := tmp.(type) {
+	case []interface{}:
+		type JobStatus struct {
+			Job    Job    `json:"job"`
+			Status string `json:"status"`
+		}
+
+		var jobs []JobStatus
+		for _, j := range t {
+			jj := j.(map[string]interface{})
+			log.Println(jj["JobID"])
+			var job Job
+			app.db.Where("id = ?", j.(map[string]interface{})["JobID"]).First(&job)
+			jobs = append(jobs, JobStatus{job, j.(map[string]interface{})["Status"].(string)})
+		}
+		resp["appliedAt"] = jobs
+	}
+
 	return resp
 }

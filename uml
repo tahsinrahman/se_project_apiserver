@@ -1,0 +1,59 @@
+GetJob(job_id)
+UpdateJob(token)
+AcceptUser(token)
+DeclineUser(token)
+Response()
+
+SignIn(token)
+SignUp(token)
+UpdateUser(token, user)
+UploadCV(token, file)
+UploadPP(token, file)
+ApplyToJob(token, job_id)
+Search(term, location)
+Response()
+
+CreateCompany(token, company)
+UpdateCompany(token, company)
+ShowCompany()
+AddAdmin(token)
+DeleteAdmin(token)
+NewJob(token, job)
+AllJob()
+
+ID          uint   
+Name        *string
+Description *string
+Email       *string
+Admin       []User 
+Address     *string
+Phone       *string
+Jobs        []Job  
+
+Token     string  
+User      *User   
+Company   *Company
+Job       *Job    
+Search    *Search 
+UserDB    *User
+CompanyDB *Company
+JobDB     *Company
+
+checkLoggedIn()
+GenerateToken()
+getTokenFromReq()
+verifyToken()
+
+type Search struct {
+	Tag      string `json:"term"`
+	Location string `json:"location"`
+}
+
+
+senderId string
+toId     string
+subject  string
+body     string
+
+BuildMessage()
+SendEmail(recipient, subject, body)

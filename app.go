@@ -52,20 +52,25 @@ func (a *App) Initialize(host, port, dbname, username, password string) {
 	//a.Router.HandleFunc("/{id}/company", UpdateCompany).Methods("PUT") //update company
 	//a.Router.HandleFunc("/{id}/company", DeleteCompany).Methods("DELETE") //delete company
 
-	a.Router.HandleFunc("/company/{id}/job", AllJobs).Methods("GET")   //show all jobs posted by company
-	a.Router.HandleFunc("/company/{id}/job", NewJob).Methods("POST")   //post new job
-	a.Router.HandleFunc("/job/{id}", GetJob).Methods("GET")            //get a job
-	a.Router.HandleFunc("/job/{id}/apply", ApplyToJob).Methods("POST") //apply to a job
-	a.Router.HandleFunc("/job/{id}/update", UpdateJob).Methods("POST") //apply to a job
+	a.Router.HandleFunc("/company/{id}/job", AllJobs).Methods("GET")       //show all jobs posted by company
+	a.Router.HandleFunc("/company/{id}/job", NewJob).Methods("POST")       //post new job
+	a.Router.HandleFunc("/job/{id}/sort/{sortopt}", GetJob).Methods("GET") //get a job
+	a.Router.HandleFunc("/job/{id}/apply", ApplyToJob).Methods("POST")     //apply to a job
+	a.Router.HandleFunc("/job/{id}/update", UpdateJob).Methods("POST")     //apply to a job
+	a.Router.HandleFunc("/job/{id}/decline", DeclineUser).Methods("POST")  //apply to a job
+	a.Router.HandleFunc("/job/{id}/accept", AcceptUser).Methods("POST")    //apply to a job
 	//a.Router.HandleFunc("/company/{id}/job/{job_id}", DeleteJob).Methods("DELETE") //delete posted jobs
 
 	a.Router.HandleFunc("/search", JobSearch).Methods("GET")  //query for job
 	a.Router.HandleFunc("/search", JobSearch).Methods("POST") //query for job
 
 	a.Router.HandleFunc("/upload", TestFileUpload).Methods("POST")
-	a.Router.PathPrefix("/images/").Handler(
-		http.StripPrefix("/images/", http.FileServer(http.Dir("/home/tahsin/go/src/github.com/tahsinrahman/se_project_apiserver/images"))),
+	a.Router.HandleFunc("/upload-cv", UploadCV).Methods("POST")
+	a.Router.HandleFunc("/upload-pp", UploadPP).Methods("POST")
+	a.Router.PathPrefix("/files/").Handler(
+		http.StripPrefix("/files/", http.FileServer(http.Dir("/home/tahsin/go/src/github.com/tahsinrahman/se_project_apiserver/files"))),
 	)
+
 }
 
 // it listens on the given address
@@ -82,6 +87,8 @@ func (a *App) CreateTables() {
 	a.db.AutoMigrate(&User{})
 	a.db.AutoMigrate(&Company{})
 	a.db.AutoMigrate(&Job{})
+	a.db.AutoMigrate(&Tag{})
+	a.db.AutoMigrate(&UserJobStatus{})
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {

@@ -16,9 +16,15 @@ type ReqBody struct {
 	User      *User    `json:"user"`
 	Company   *Company `json:"company"`
 	Job       *Job     `json:"job"`
+	Search    *Search  `json:"search"`
 	UserDB    *User
 	CompanyDB *Company
 	JobDB     *Company
+}
+
+type Search struct {
+	Tag      string `json:"term"`
+	Location string `json:"location"`
 }
 
 func writeResp(w http.ResponseWriter, code int, resp map[string]interface{}) {
@@ -55,10 +61,6 @@ func getTknFromReq(r *http.Request) (*ReqBody, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Println("bal", token.Token)
-	log.Println("bal", token.User)
-	log.Println("bal-job", token.Job)
-
 	return &token, nil
 }
 
@@ -117,9 +119,6 @@ func verifyToken(reqToken string) *User {
 		var userInDB User
 		log.Println("verify username", username)
 		app.db.Where("username = ?", username).First(&userInDB)
-
-		log.Println(*userInDB.Username)
-		log.Println(*userInDB.Password)
 
 		// username not found
 		if userInDB.Username == nil {
